@@ -1,0 +1,29 @@
+[package]
+name = "flappy_bird"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bevy = { version = "0.14.1",features = ["dynamic_linking"]}
+rand = "0.8.5"
+bevy_dylib = "0.14.1"
+
+
+
+[profile.dev]
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.release]
+opt-level = 3
+incremental = true
+codegen-units = 256
+
+[profile.wasm-release]
+inherits = "release"
+opt-level = "s"
+strip = "debuginfo"
