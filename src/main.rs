@@ -1,5 +1,5 @@
-use bevy::{prelude::*, window::PrimaryWindow};
-use rand::{rngs::ThreadRng, thread_rng, Rng};
+use bevy::{prelude::*, window::{PrimaryWindow, WindowMode, WindowResolution}};
+use rand::{rngs::ThreadRng, rng, Rng};
 
 fn main() {
     App::new()
@@ -47,13 +47,16 @@ struct Bird {
 fn setup_level(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    window_query: Query<&Window, With<PrimaryWindow>>,
+    mut window_query: Query<&mut Window, With<PrimaryWindow>>,
 ) {
     let pipe_image = asset_server.load("pipe.png");
-    let window = window_query.get_single().unwrap();
+    if let Ok(mut window) = window_query.single_mut() {
+        window.resolution = WindowResolution::new(1920., 1080.);
+        window.mode = WindowMode::Windowed;
+    }
     commands.insert_resource(GameManager {
         pipe_image: pipe_image.clone(),
-        window_dimensions: Vec2::new(window.width(), window.height()),
+        window_dimensions: Vec2::new(1920.,1080.),
     });
     commands.insert_resource(ClearColor(Color::srgb(0.5, 0.7, 0.8)));
 
@@ -68,9 +71,9 @@ fn setup_level(
         Bird { velocity: 0. },
     ));
 
-    let mut rand = thread_rng();
+    let mut rand = rng();
 
-    spawn_obstacles(&mut commands, &mut rand, window.width(), &pipe_image);
+    spawn_obstacles(&mut commands, &mut rand, 1080., &pipe_image);
 }
 #[derive(Component)]
 struct Obstacle {
@@ -81,7 +84,7 @@ fn update_obstacles(
     game_manager: Res<GameManager>,
     mut obstacle_query: Query<(&mut Obstacle, &mut Transform)>,
 ) {
-    let mut rand = thread_rng();
+    let mut rand = rng();
     let y_offset = generate_offset(&mut rand);
     for (obstacle, mut transform) in obstacle_query.iter_mut() {
         transform.translation.x -= time.delta_secs() * OBSTACLE_SCROLL_SPEED;
@@ -143,7 +146,7 @@ fn spawn_obstacle(
     ));
 }
 fn generate_offset(rand: &mut ThreadRng) -> f32 {
-    return rand.gen_range(-OBSTACLE_VERTICAL_OFFSET..OBSTACLE_VERTICAL_OFFSET) * PIXEL_RATIO;
+    return rand.random_range(-OBSTACLE_VERTICAL_OFFSET..OBSTACLE_VERTICAL_OFFSET) * PIXEL_RATIO;
 }
 fn update_bird(
     mut commands: Commands,
@@ -153,7 +156,7 @@ fn update_bird(
     keys: Res<ButtonInput<KeyCode>>,
     game_manager: Res<GameManager>,
 ) {
-    if let Ok((mut bird, mut transform)) = bird_query.get_single_mut() {
+    if let Ok((mut bird, mut transform)) = bird_query.single_mut() {
         if keys.just_pressed(KeyCode::Space) {
             bird.velocity = FLAP_FORCE;
         }
@@ -188,7 +191,7 @@ fn update_bird(
             for (_pipe_transform, entity) in obstacle_query.iter_mut() {
                 commands.entity(entity).despawn();
             }
-            let mut rand = thread_rng();
+            let mut rand = rng();
             spawn_obstacles(
                 &mut commands,
                 &mut rand,
