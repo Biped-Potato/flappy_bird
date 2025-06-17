@@ -1,4 +1,4 @@
-use bevy::{prelude::*, window::{PrimaryWindow, WindowMode, WindowResolution}};
+use bevy::{prelude::*, window::PrimaryWindow};
 use rand::{rngs::ThreadRng, rng, Rng};
 
 fn main() {
@@ -47,16 +47,13 @@ struct Bird {
 fn setup_level(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    mut window_query: Query<&mut Window, With<PrimaryWindow>>,
+    window_query: Query<&mut Window, With<PrimaryWindow>>,
 ) {
     let pipe_image = asset_server.load("pipe.png");
-    if let Ok(mut window) = window_query.single_mut() {
-        window.resolution = WindowResolution::new(1920., 1080.);
-        window.mode = WindowMode::Windowed;
-    }
+    let window = window_query.single().unwrap();
     commands.insert_resource(GameManager {
         pipe_image: pipe_image.clone(),
-        window_dimensions: Vec2::new(1920.,1080.),
+        window_dimensions: Vec2::new(window.width(),window.height()),
     });
     commands.insert_resource(ClearColor(Color::srgb(0.5, 0.7, 0.8)));
 
